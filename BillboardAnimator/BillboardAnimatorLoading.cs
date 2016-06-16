@@ -19,9 +19,6 @@ namespace BillboardAnimator
         private RenderingManager renderingManager;
         public MainPanel UI { get; set; }
 
-        public static readonly string IMAGES_DIR = "images";
-        public static readonly string VIDEOS_DIR = "videos";
-
 
         public override void OnCreated(ILoading loading)
         {
@@ -37,7 +34,7 @@ namespace BillboardAnimator
 
         public override void OnLevelLoaded(LoadMode mode)
         {
-            if (mode == LoadMode.LoadGame || mode == LoadMode.NewGame || mode == LoadMode.NewMap || mode == LoadMode.LoadMap)
+            if (mode == LoadMode.LoadGame || mode == LoadMode.NewGame )
             {
                 UIView view = UIView.GetAView();
                 UI = ToolsModifierControl.toolController.gameObject.AddComponent<MainPanel>();
@@ -49,6 +46,8 @@ namespace BillboardAnimator
                     RenderManager.RegisterRenderableManager(renderingManager);
                     renderingManager.registered = true;
                 }
+                renderingManager.initTimer();
+
                 /*ModSettings.LoadSettings();
 
                 
@@ -80,7 +79,9 @@ namespace BillboardAnimator
 
             bool spriteSuccess = true;
 
-            String[] files = Directory.GetFiles(FileUtils.GetModPath() + Path.DirectorySeparatorChar + IMAGES_DIR);
+            PropConfig.LoadPropInfo();
+
+            String[] files = Directory.GetFiles(FileUtils.GetModPath() + Path.DirectorySeparatorChar + FileUtils.IMAGES_DIR);
             foreach (string file in files)
             {
                 string[] splitValues = file[0] == Path.DirectorySeparatorChar ? file.Substring(1).Split(Path.DirectorySeparatorChar) : file.Split(Path.DirectorySeparatorChar);
@@ -89,15 +90,21 @@ namespace BillboardAnimator
                 spriteSuccess = TextureUtils.AddTexture(file, fileKey) && spriteSuccess;
                
             }
-            /*
+
+            files = Directory.GetFiles(FileUtils.GetAltPath(true));
+            foreach (string file in files)
+            {
+                string[] splitValues = file[0] == Path.DirectorySeparatorChar ? file.Substring(1).Split(Path.DirectorySeparatorChar) : file.Split(Path.DirectorySeparatorChar);
+                string fileName = splitValues[splitValues.Length - 1];
+                string fileKey = fileName.Split('.')[0];
+                spriteSuccess = TextureUtils.AddTexture(file, fileKey) && spriteSuccess;
+
+            }
+            
             if (!spriteSuccess)
             {
                 LoggerUtils.LogError("Failed to load some sprites!");
             }
-            else
-            {
-                //RouteShieldConfig.SaveRouteShieldInfo();
-            }*/
 
         }
     }

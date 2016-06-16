@@ -1,4 +1,5 @@
 ﻿using BillboardAnimator.Managers;
+using BillboardAnimator.UI;
 using BillboardAnimator.Utils;
 using ColossalFramework.UI;
 using System;
@@ -11,6 +12,8 @@ namespace BillboardAnimator.Tools
 {
     class PropSelectorTool : DefaultTool
     {
+        public DropdownDialog dialog;
+
         protected override void Awake()
         {
             LoggerUtils.Log("Tool awake");
@@ -45,15 +48,24 @@ namespace BillboardAnimator.Tools
                         PropManager propManager = PropManager.instance;
                         PropInstance prop = propManager.m_props.m_buffer[(int)propId];
 
-                        if ((prop.m_flags & (ushort)(PropInstance.Flags.Created)) != (ushort)PropInstance.Flags.None)
+                        if ((prop.m_flags & (ushort)(PropInstance.Flags.Created)) != (ushort)PropInstance.Flags.None && PropConfig.Instance().propPositioningDict.ContainsKey(prop.Info.GetLocalizedTitle()) )
                         {
                             if (Event.current.type == EventType.MouseDown)
                             {
                                 //unset tool
                                 ShowToolInfo(false, null, new Vector3());
 
-                                LoggerUtils.Log(String.Format("prop info: {0} {1} {2}", prop.Info.GetLocalizedTitle(), Mathf.Rad2Deg * prop.Angle, prop.Position));
-                                ScreenManager.instance.SetPropScreen(false, propId, prop.Position, -1 * Mathf.Rad2Deg * prop.Angle, prop.Info.GetLocalizedTitle());
+                                dialog.isProp = true;
+                                dialog.entityId = propId;
+                                dialog.entityPosition = prop.Position;
+                                dialog.entityAngle = -1 * Mathf.Rad2Deg * prop.Angle;
+                                dialog.entityName = prop.Info.GetLocalizedTitle();
+
+                                dialog.updateDropdowns();
+                                dialog.Show();
+
+                                ToolsModifierControl.toolController.CurrentTool = ToolsModifierControl.GetTool<DefaultTool>();
+                                ToolsModifierControl.SetTool<DefaultTool>();
                             }
                             else
                             {
@@ -69,7 +81,7 @@ namespace BillboardAnimator.Tools
                         BuildingManager buildingManager = BuildingManager.instance;
                         Building building = buildingManager.m_buildings.m_buffer[buildingId];
                         UIPanel panel = GameObject.Find("(Library) CityServiceWorldInfoPanel").GetComponent<UIPanel>();
-                        if ((building.m_flags & Building.Flags.Created) != Building.Flags.None)
+                        if ((building.m_flags & Building.Flags.Created) != Building.Flags.None && PropConfig.Instance().propPositioningDict.ContainsKey(building.Info.GetLocalizedTitle())) 
                         {
                             Vector3 position;
                             Quaternion rotation;
@@ -79,9 +91,19 @@ namespace BillboardAnimator.Tools
                                 //unset tool
                                 ShowToolInfo(false, null, new Vector3());
                                 panel.Hide();
-                                LoggerUtils.Log(String.Format("prop info: {0} {1} {2}", building.Info.GetLocalizedTitle(), rotation.eulerAngles.y, position));
-                                ScreenManager.instance.SetPropScreen(true, buildingId, position, rotation.eulerAngles.y, building.Info.GetLocalizedTitle());
 
+                                dialog.isProp = false;
+                                dialog.entityId = buildingId;
+                                dialog.entityPosition = position;
+                                dialog.entityAngle = rotation.eulerAngles.y;
+                                dialog.entityName = building.Info.GetLocalizedTitle();
+
+                                dialog.updateDropdowns();
+                                dialog.Show();
+
+                                //ScreenManager.instance.SetPropScreen(false, buildingId, position, rotation.eulerAngles.y, building.Info.GetLocalizedTitle());
+                                ToolsModifierControl.toolController.CurrentTool = ToolsModifierControl.GetTool<DefaultTool>();
+                                ToolsModifierControl.SetTool<DefaultTool>();
                             }
                             else
                             {

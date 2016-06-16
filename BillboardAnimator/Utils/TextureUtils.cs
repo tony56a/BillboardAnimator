@@ -9,7 +9,7 @@ namespace BillboardAnimator.Utils
 {
     class TextureUtils
     {
-        public static List<Material> m_screenTextureStore = new List<Material>();
+        public static Dictionary<string, Material> m_screenTextureStore = new Dictionary<string, Material>();
         /// <summary>
         /// Load an image file as a material for use when rendering route markers
         /// </summary>
@@ -37,7 +37,7 @@ namespace BillboardAnimator.Utils
 
             Material material = new Material(shader);
             material.mainTexture = texture;
-            m_screenTextureStore.Add(material);
+            m_screenTextureStore[textureName]= material;
             
             return true;
         }

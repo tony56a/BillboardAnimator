@@ -1,5 +1,6 @@
 ﻿using BillboardAnimator.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,8 +41,7 @@ namespace BillboardAnimator.Managers
 
         public void initTimer()
         {
-            messageUpdateTimer.Elapsed += MessageUpdateTimer_Elapsed;
-            messageUpdateTimer.AutoReset = true;
+
             interval = 5000;
             LoggerUtils.Log("Timer started!");
         }
@@ -65,7 +65,8 @@ namespace BillboardAnimator.Managers
         protected override void Awake()
         {
             base.Awake();
-            initTimer();
+            messageUpdateTimer.Elapsed += MessageUpdateTimer_Elapsed;
+            messageUpdateTimer.AutoReset = true;
         }
 
         protected override void BeginOverlayImpl(RenderManager.CameraInfo cameraInfo)
@@ -125,15 +126,22 @@ namespace BillboardAnimator.Managers
             if (screenRefreshFlag)
             {
                 screenRefreshFlag = false;
-                foreach( ScreenObj obj in ScreenManager.instance.buildingDict.Values)
+                List<Material> materials = TextureUtils.m_screenTextureStore.Values.ToList();
+
+                foreach ( ScreenObj obj in ScreenManager.instance.buildingDict.Values)
                 {
                     if (obj.signObject)
                     {
-                        MeshRenderer[] renderers = obj.signObject.GetComponentsInChildren<MeshRenderer>();
-                        foreach (MeshRenderer renderer in renderers)
+                        PropPositioningInfo positioningInfo = PropConfig.Instance().propPositioningDict[obj.propName];
+
+                        for (byte i = 0; i < positioningInfo.numSigns; i++)
                         {
-                            Material mat = TextureUtils.m_screenTextureStore[messageRandom.Next(TextureUtils.m_screenTextureStore.Count)];
-                            renderer.material = mat;
+                            Transform child = obj.signObject.transform.Find(i.ToString());
+                            if( child != null && !obj.isStatic[i] )
+                            {
+                                Material mat = materials[messageRandom.Next(materials.Count)];
+                                child.gameObject.GetComponent<MeshRenderer>().material = mat;
+                            }
                         }
                     }
                 }
@@ -141,21 +149,28 @@ namespace BillboardAnimator.Managers
                 {
                     if (obj.signObject)
                     {
-                        MeshRenderer[] renderers = obj.signObject.GetComponentsInChildren<MeshRenderer>();
-                        foreach (MeshRenderer renderer in renderers)
+                        PropPositioningInfo positioningInfo = PropConfig.Instance().propPositioningDict[obj.propName];
+
+                        for (byte i = 0; i < positioningInfo.numSigns; i++)
                         {
-                            Material mat = TextureUtils.m_screenTextureStore[messageRandom.Next(TextureUtils.m_screenTextureStore.Count)];
-                            renderer.material = mat;
+                            Transform child = obj.signObject.transform.Find(i.ToString());
+                            if (child != null && !obj.isStatic[i])
+                            {
+                                Material mat = materials[messageRandom.Next(materials.Count)];
+                                child.gameObject.GetComponent<MeshRenderer>().material = mat;
+                            }
                         }
                     }
-                 
+
                 }
             }
         }
 
         private void renderGameObjects()
         {
-            foreach( KeyValuePair<ushort,ScreenObj> obj in ScreenManager.instance.propDict)
+            List<Material> materials = TextureUtils.m_screenTextureStore.Values.ToList();
+
+            foreach ( KeyValuePair<ushort,ScreenObj> obj in ScreenManager.instance.propDict)
             {
                 ScreenObj screenObj = obj.Value;
                 if (screenObj.signObject != null)
@@ -169,44 +184,31 @@ namespace BillboardAnimator.Managers
                     screenObj.signObject.transform.position = screenObj.position;
                     screenObj.signObject.transform.Rotate(0, (screenObj.angle) + 60f, 0);
 
-                    GameObject screenPaneObj = new GameObject();
-                    screenPaneObj.AddComponent<MeshRenderer>();
-                    screenPaneObj.AddComponent<MeshFilter>();
-                    screenPaneObj.transform.parent = screenObj.signObject.transform;
-                    screenPaneObj.transform.localPosition = new Vector3(-0.05f, 26f, -4.6f);
-                    screenPaneObj.transform.localScale = new Vector3(1.93f, 2.7f, 1f);
-                    screenPaneObj.transform.Rotate(0, (screenObj.angle) + 60f, 0);
+                    PropPositioningInfo positioningInfo = PropConfig.Instance().propPositioningDict[screenObj.propName];
+                    for (byte i = 0; i < positioningInfo.numSigns; i++)
+                    {
+                        if (screenObj.isActive[i])
+                        {
+                            if( screenObj.isStatic[i] && !TextureUtils.m_screenTextureStore.ContainsKey(screenObj.staticImageString[i]))
+                            {
+                                continue;
+                            }
 
-                    Material mat = TextureUtils.m_screenTextureStore[messageRandom.Next(TextureUtils.m_screenTextureStore.Count)];
-                    screenPaneObj.GetComponent<Renderer>().material = mat;
-                    screenPaneObj.GetComponent<MeshFilter>().mesh = MeshUtils.CreateRectMesh(mat.mainTexture.width, mat.mainTexture.height);
-
-                    screenPaneObj = new GameObject();
-                    screenPaneObj.AddComponent<MeshRenderer>();
-                    screenPaneObj.AddComponent<MeshFilter>();
-                    screenPaneObj.transform.parent = screenObj.signObject.transform;
-                    screenPaneObj.transform.localPosition = new Vector3(4f, 26f, 2.4f);
-                    screenPaneObj.transform.localScale = new Vector3(1.93f, 2.7f, 1f);
-                    screenPaneObj.transform.Rotate(0, (screenObj.angle) - 60f, 0);
-
-                    mat = TextureUtils.m_screenTextureStore[messageRandom.Next(TextureUtils.m_screenTextureStore.Count)];
-                    screenPaneObj.GetComponent<Renderer>().material = mat;
-                    screenPaneObj.GetComponent<MeshFilter>().mesh = MeshUtils.CreateRectMesh(mat.mainTexture.width, mat.mainTexture.height);
-
-
-                    screenPaneObj = new GameObject();
-                    screenPaneObj.AddComponent<MeshRenderer>();
-                    screenPaneObj.AddComponent<MeshFilter>();
-                    screenPaneObj.transform.parent = screenObj.signObject.transform;
-                    screenPaneObj.transform.localPosition = new Vector3(4f, 26f, 2.4f);
-                    screenPaneObj.transform.localScale = new Vector3(1.93f, 2.7f, 1f);
-                    screenPaneObj.transform.Rotate(0, (screenObj.angle) + 180f, 0);
-
-                    mat = TextureUtils.m_screenTextureStore[messageRandom.Next(TextureUtils.m_screenTextureStore.Count)];
-                    screenPaneObj.GetComponent<Renderer>().material = mat;
-                    screenPaneObj.GetComponent<MeshFilter>().mesh = MeshUtils.CreateRectMesh(mat.mainTexture.width, mat.mainTexture.height);
-                    //TODO: Create child objects to hold renderers for each screen for the prop
-
+                            GameObject screenPaneObj = new GameObject(i.ToString());
+                            screenPaneObj.AddComponent<MeshRenderer>();
+                            screenPaneObj.AddComponent<MeshFilter>();
+                            screenPaneObj.transform.parent = screenObj.signObject.transform;
+                            screenPaneObj.transform.localPosition = new Vector3(positioningInfo.xPos[i], positioningInfo.yPos[i], positioningInfo.zPos[i]);
+                            screenPaneObj.transform.localScale = new Vector3(positioningInfo.xSize[i], positioningInfo.ySize[i], 1f);
+                            screenPaneObj.transform.Rotate(0, (screenObj.angle) + positioningInfo.rotations[i], 0);
+                            
+                            Material mat = screenObj.isStatic[i] ? TextureUtils.m_screenTextureStore[screenObj.staticImageString[i]] : materials[messageRandom.Next(materials.Count)];
+                            screenPaneObj.GetComponent<Renderer>().material = mat;
+                            screenPaneObj.GetComponent<MeshFilter>().mesh = MeshUtils.CreateRectMesh(mat.mainTexture.width, mat.mainTexture.height);
+                        }
+                        
+                    }
+                    
                     ScreenManager.instance.propDict[obj.Key].signObject = screenObj.signObject;
                 }
 
@@ -225,43 +227,30 @@ namespace BillboardAnimator.Managers
                     screenObj.signObject.transform.position = screenObj.position;
                     screenObj.signObject.transform.Rotate(0, (screenObj.angle) + 60f, 0);
 
-                    GameObject screenPaneObj = new GameObject();
-                    screenPaneObj.AddComponent<MeshRenderer>();
-                    screenPaneObj.AddComponent<MeshFilter>();
-                    screenPaneObj.transform.parent = screenObj.signObject.transform;
-                    screenPaneObj.transform.localPosition = new Vector3(-0.05f, 26f, -4.6f);
-                    screenPaneObj.transform.localScale = new Vector3(1.93f, 2.7f, 1f);
-                    screenPaneObj.transform.Rotate(0, (screenObj.angle) + 60f, 0);
+                    PropPositioningInfo positioningInfo = PropConfig.Instance().propPositioningDict[screenObj.propName];
+                    for (byte i = 0; i < positioningInfo.numSigns; i++)
+                    {
+                        if(screenObj.isActive[i])
+                        {
+                            if (screenObj.isStatic[i] && !TextureUtils.m_screenTextureStore.ContainsKey(screenObj.staticImageString[i]))
+                            {
+                                continue;
+                            }
 
-                    Material mat = TextureUtils.m_screenTextureStore[messageRandom.Next(TextureUtils.m_screenTextureStore.Count)];
-                    screenPaneObj.GetComponent<Renderer>().material = mat;
-                    screenPaneObj.GetComponent<MeshFilter>().mesh = MeshUtils.CreateRectMesh(mat.mainTexture.width, mat.mainTexture.height);
+                            GameObject screenPaneObj = new GameObject(i.ToString());
+                            screenPaneObj.AddComponent<MeshRenderer>();
+                            screenPaneObj.AddComponent<MeshFilter>();
+                            screenPaneObj.transform.parent = screenObj.signObject.transform;
+                            screenPaneObj.transform.localPosition = new Vector3(positioningInfo.xPos[i], positioningInfo.yPos[i], positioningInfo.zPos[i]);
+                            screenPaneObj.transform.localScale = new Vector3(positioningInfo.xSize[i], positioningInfo.ySize[i], 1f);
+                            screenPaneObj.transform.Rotate(0, (screenObj.angle) + positioningInfo.rotations[i], 0);
 
-                    screenPaneObj = new GameObject();
-                    screenPaneObj.AddComponent<MeshRenderer>();
-                    screenPaneObj.AddComponent<MeshFilter>();
-                    screenPaneObj.transform.parent = screenObj.signObject.transform;
-                    screenPaneObj.transform.localPosition = new Vector3(4f, 26f, 2.4f);
-                    screenPaneObj.transform.localScale = new Vector3(1.93f, 2.7f, 1f);
-                    screenPaneObj.transform.Rotate(0, (screenObj.angle) - 60f, 0);
-
-                    mat = TextureUtils.m_screenTextureStore[messageRandom.Next(TextureUtils.m_screenTextureStore.Count)];
-                    screenPaneObj.GetComponent<Renderer>().material = mat;
-                    screenPaneObj.GetComponent<MeshFilter>().mesh = MeshUtils.CreateRectMesh(mat.mainTexture.width, mat.mainTexture.height);
-
-
-                    screenPaneObj = new GameObject();
-                    screenPaneObj.AddComponent<MeshRenderer>();
-                    screenPaneObj.AddComponent<MeshFilter>();
-                    screenPaneObj.transform.parent = screenObj.signObject.transform;
-                    screenPaneObj.transform.localPosition = new Vector3(-4.1f, 26f, 2.3f);
-                    screenPaneObj.transform.localScale = new Vector3(1.93f, 2.7f, 1f);
-                    screenPaneObj.transform.Rotate(0, (screenObj.angle) + 180f, 0);
-
-                    mat = TextureUtils.m_screenTextureStore[messageRandom.Next(TextureUtils.m_screenTextureStore.Count)];
-                    screenPaneObj.GetComponent<Renderer>().material = mat;
-                    screenPaneObj.GetComponent<MeshFilter>().mesh = MeshUtils.CreateRectMesh(mat.mainTexture.width, mat.mainTexture.height);
-                    //TODO: Create child objects to hold renderers for each screen for the prop
+                            Material mat = screenObj.isStatic[i] ? TextureUtils.m_screenTextureStore[screenObj.staticImageString[i]] : materials[messageRandom.Next(materials.Count)];
+                            screenPaneObj.GetComponent<Renderer>().material = mat;
+                            screenPaneObj.GetComponent<MeshFilter>().mesh = MeshUtils.CreateRectMesh(mat.mainTexture.width, mat.mainTexture.height);
+                        }
+                       
+                    }
 
                     ScreenManager.instance.buildingDict[obj.Key].signObject = screenObj.signObject;
                 }

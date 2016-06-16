@@ -33,6 +33,14 @@ namespace BillboardAnimator
                 }
             }
 
+            foreach (ushort segment in propKeys)
+            {
+                if (PropManager.instance.m_props.m_buffer[segment].m_flags == (ushort)PropInstance.Flags.None)
+                {
+                    ScreenManager.instance.delScreenObj(segment, false);
+                }
+            }
+
             base.OnAfterSimulationTick();
         }
     }

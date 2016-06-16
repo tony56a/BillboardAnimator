@@ -17,29 +17,31 @@ namespace BillboardAnimator.Managers
 
         public Dictionary<ushort, ScreenObj> buildingDict = new Dictionary<ushort, ScreenObj>();
 
-        public void SetPropScreen(bool isBuilding,ushort id, Vector3 position, float angle, string propName)
+        public void SetPropScreen(bool isProp,ushort id, Vector3 position, float angle, string propName, List<bool> isEnabled, List<bool> isStatic, List<string> staticStringName=null)
         {
 
-            ScreenObj obj = new ScreenObj(position, angle, propName);
-            if( isBuilding)
+            ScreenObj obj = new ScreenObj(id, position, angle, propName, isEnabled, isStatic, staticStringName);
+            if(isProp)
             {
-                if(!buildingDict.ContainsKey(id))
+                if (propDict.ContainsKey(id))
                 {
-                    buildingDict[id] = obj;
-
+                    Destroy(propDict[id].signObject);
                 }
+                propDict[id] = obj;
+
             }
             else
             {
-                if (!propDict.ContainsKey(id))
+                if (buildingDict.ContainsKey(id))
                 {
-                    propDict[id] = obj;
+                    Destroy(buildingDict[id].signObject);
                 }
+                buildingDict[id] = obj;
             }
             RenderingManager.instance.update();
         }
 
-        internal void delScreenObj(ushort key, bool isBuilding)
+        public void delScreenObj(ushort key, bool isBuilding)
         {
             ScreenObj obj = isBuilding ? buildingDict[key] : propDict[key];
             Destroy(obj.signObject);
@@ -52,6 +54,22 @@ namespace BillboardAnimator.Managers
                 propDict.Remove(key);
             }
         }
+
+        public ScreenObj[] saveScreen (bool isProp)
+        {
+            return isProp ? new List<ScreenObj>(propDict.Values).ToArray() : new List<ScreenObj>(buildingDict.Values).ToArray();
+        }
+
+        public void loadScreen( bool isProp, ScreenObj[] screenObjs )
+        {
+            if (screenObjs != null)
+            {
+                foreach (ScreenObj screen in screenObjs)
+                {
+                    SetPropScreen(isProp, screen.entityId, new Vector3(screen.x, screen.y, screen.z), screen.angle, screen.propName, screen.isActive, screen.isStatic, screen.staticImageString);
+                }
+            }
+        }
     }
 
     [Serializable]
@@ -62,7 +80,13 @@ namespace BillboardAnimator.Managers
         public float x = 0;
         public float y = 0;
         public float z = 0;
+        public List<bool> isActive;
+        public List<bool> isStatic;
+        public ushort entityId = 0;
         
+        [XmlElement(IsNullable = true)]
+        public List<string> staticImageString;
+
         [NonSerialized]
         public Vector3 position;
         
@@ -72,8 +96,9 @@ namespace BillboardAnimator.Managers
         [NonSerialized]
         public GameObject signObject;
 
-        public ScreenObj( Vector3 position, float angle, string propName, string extras = null)
+        public ScreenObj( ushort entityId, Vector3 position, float angle, string propName, List<bool> isActive, List<bool> isStatic, List<string> staticImageString=null, string extras = null)
         {
+            this.entityId = entityId;
             this.x = position.x;
             this.y = position.y;
             this.z = position.z;
@@ -81,6 +106,11 @@ namespace BillboardAnimator.Managers
 
             this.propName = propName;
             this.angle = angle;
+
+            this.isActive = isActive;
+            this.isStatic = isStatic;
+            this.staticImageString = staticImageString;
+
             this.extras = extras;
 
         }

@@ -17,12 +17,18 @@ namespace BillboardAnimator.UI
 
         private bool isUiShowing;
 
+        DropdownDialog dialog;
+
         public MainPanel()
         {
             UIView uiView = UIView.GetAView();
-            placeSignBtn = (UIButton)uiView.AddUIComponent(typeof(UIButton));
 
-            placeSignBtn.text = "Animate";
+            dialog = uiView.AddUIComponent(typeof(DropdownDialog)) as DropdownDialog;
+            dialog.Hide();
+
+            placeSignBtn = (UIButton)uiView.AddUIComponent(typeof(UIButton));
+            
+            placeSignBtn.text = "DB";
             placeSignBtn.width = 75;
             placeSignBtn.height = 30;
             placeSignBtn.normalBgSprite = "ButtonMenu";
@@ -36,29 +42,29 @@ namespace BillboardAnimator.UI
             placeSignBtn.focusedTextColor = new Color32(255, 255, 255, 255);
             placeSignBtn.pressedTextColor = new Color32(30, 30, 44, 255);
             placeSignBtn.eventClick += propSelectorToolBtn_eventClick;
-            placeSignBtn.relativePosition = new Vector3(400f, 120);
+            placeSignBtn.relativePosition = new Vector3(30, 60);
 
             propSelectorTool = ToolsModifierControl.toolController.gameObject.AddComponent<PropSelectorTool>();
 
             ToolsModifierControl.toolController.CurrentTool = ToolsModifierControl.GetTool<DefaultTool>();
             ToolsModifierControl.SetTool<DefaultTool>();
+
+            propSelectorTool.dialog = dialog;
         }
 
         private void propSelectorToolBtn_eventClick(UIComponent component, UIMouseEventParameter eventParam)
         {
 
-            if (isUiShowing)
+            if (ToolsModifierControl.toolController.CurrentTool == propSelectorTool)
             {
                 ToolsModifierControl.toolController.CurrentTool = ToolsModifierControl.GetTool<DefaultTool>();
                 ToolsModifierControl.SetTool<DefaultTool>();
-               
             }
             else
             {
                 ToolsModifierControl.toolController.CurrentTool = propSelectorTool;
                 ToolsModifierControl.SetTool<PropSelectorTool>();
             }
-            isUiShowing = !isUiShowing;
 
         }
     }
